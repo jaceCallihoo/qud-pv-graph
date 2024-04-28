@@ -1,4 +1,9 @@
-// todo: graph die hit chance rather that at least on of 3 hit chance
+// -- understanding ---------------------------------------------------------->
+// Some calculations result in single fractions (chance to hit), others result
+// in many (number of penetrations each have their own chance)
+// Core question: how do we use these lists of fractions to understand the
+// larger implications of the players statistics 
+
 // -- data generation -------------------------------------------------------->
 let data = []
 let data2 = []
@@ -11,9 +16,50 @@ for (let i = 0; i < 40; i++) {
 }
 
 // -- calculation ------------------------------------------------------------>
-function g() {
+// given a set of player stats, and a set of npc stats (including health), what 
+// are the odds you can kill the enemy in x attacks where x is the bottom axis 
+// of the graph and y is the percentage chance
+// Steps:
+//  - what are the odds of hitting?
+//  - (gussing) find the lowest number of times required to penetrate if you
+//  rolled max damage on each damage roll
+//  - because you may not actually need to roll max damaged on each, calculate
+//  the odds of rolling the npcs health in damage with x penetrations
+//  - Then find the number of times required to penetrate when rolling the 
+//  lowest damage values
+//  - 
+function g(playerStats, npcStats) {
+    // get chance to hit
+    let attackBonus = playerStats.agility + playerStats.weaponHitBonus
+    let defenderDv = npcStats.dv
+    // hitChance should serve as a base multiplier for all penetration chances
+    let hitChance = chanceToHit(attackBonus, defenderDv)
+
+    // x is the data for the x axis
+    let x = Array(100);
+    for (let i = 0; i < x.length; i++) {
+        // calculate the odds of killing the npc with x attacks
+        // probably requires dp
+
+    }
 }
 
+// given a set of player stats and a set of npc stats (excluding health), what
+// how many att
+function successfulAttackChance() {
+
+}
+
+function chanceToHit(attackBonus, defenderDv) {
+    let hitTarget = defenderDv - attackBonus;
+    if (hitTarget <= 1) {
+        return new Fraction(1, 1);
+    }
+    if (hitTarget > 20) {
+        return new Fraction(0, 1)
+    }
+    return new Fraction(21 - hitTarget, 20);
+}
 
 function f2(pvsGreater) {
     let dsc = dsc2(pvsGreater);
@@ -30,56 +76,15 @@ function dsc2(pvsGreater) {
 
     // if we are gaurenteed to roll the number required, the chance is 100%
     if (minimumPenetratingDieRoll <= 1) {
-        return { numerator: 1, denominator: 1 };
+        return new Fraction(1, 1);
     }
 
     // calcule how many eights are neded to be rolled in order to get a penetration 
     let numEightsRequiredToPenetrate = Math.floor((minimumPenetratingDieRoll - 2) / 8);
     minimumPenetratingDieRoll -= numEightsRequiredToPenetrate * (10 - 2);
-    let baseMultiplier = { numerator: 1, denominator: Math.pow(10, numEightsRequiredToPenetrate) }
+    let baseMultiplier = new Fraction(1, Math.pow(10, numEightsRequiredToPenetrate))
     
-    return multiplyFraction({ numerator: 11 - minimumPenetratingDieRoll, denominator: 10 }, baseMultiplier)
-}
-
-// -- fraction helpers ------------------------------------------------------->
-function invertFraction(a) {
-    console.assert(validateFraction(a))
-    return {
-        numerator: a.denominator,
-        denominator: a.numerator
-    };
-}
-
-function complementFraction(a) {
-    console.assert(validateFraction(a))
-    return {
-        numerator: a.denominator - a.numerator,
-        denominator: a.denominator
-    };
-}
-
-function multiplyFraction(a, b) {
-    console.assert(validateFraction(a))
-    console.assert(validateFraction(b))
-    return {
-        numerator: a.numerator * b.numerator,
-        denominator: a.denominator * b.denominator
-    };
-}
-
-function evaluateFraction(a) {
-    console.assert(validateFraction(a))
-    console.assert(a.numerator && a.denominator)
-    return a.numerator / a.denominator;
-}
-
-function validateFraction(a) {
-    return (
-        'numerator' in a &&
-        'denominator' in a &&
-        Number.isInteger(a.numerator) &&
-        Number.isInteger(a.denominator)
-    )
+    return new Fraction(11 - minimumPenetratingDieRoll, 10).multiply(baseMultiplier);
 }
 
 // -- graphs ----------------------------------------------------------------->
