@@ -10,7 +10,7 @@ let data2 = []
 let labels = []
 for (let i = 0; i < 40; i++) {
     let pvsGreater = i - 30;
-    data.push(evaluateFraction(f2(pvsGreater)) * 100)
+    data.push(evaluateFraction(chanceToPenetrate(pvsGreater)) * 100)
     data2.push(evaluateFraction(dsc2(pvsGreater)) * 100)
     labels.push(pvsGreater)
 }
@@ -27,7 +27,10 @@ for (let i = 0; i < 40; i++) {
 //  the odds of rolling the npcs health in damage with x penetrations
 //  - Then find the number of times required to penetrate when rolling the 
 //  lowest damage values
-//  - 
+//  - The penetrations before the first are gaurenteed to fail for the given x
+//  - The penetrations at and after the second ar gaurenteed to succeed for the
+//  given x
+//  - calculate the chances for all the ones in between
 function g(playerStats, npcStats) {
     // get chance to hit
     let attackBonus = playerStats.agility + playerStats.weaponHitBonus
@@ -39,9 +42,37 @@ function g(playerStats, npcStats) {
     let x = Array(100);
     for (let i = 0; i < x.length; i++) {
         // calculate the odds of killing the npc with x attacks
-        // probably requires dp
+        let maxDamageRoll = getMaxDamageRoll()
+        // lowest amount of penetrations required in order to kill. Any amount
+        // of penetrations lower than this value is gaurenteed to not kill
+        let minRequiredPenetrations = Math.ceil(maxDamageRoll / npcStats.health);
 
+        let minDamageRoll = getMinDamageRoll()
+        // the minimum required penetrations gaurenteed to kill reguardless of
+        // the damage roll
+        let minRequierdPenetrationsGaurenteed = Math.ceil(minDamageRoll / npcStats.health);
+
+        // total odds =
+        //      odds of rolling minRequiredPenetrationsGaurenteed
+        //      for each number of penetrations below 
+        //      minRquiredPenetrationsGaurenteed and above / equal to 
+        //      minRequiredPenetrations: add P(minRequiredPenetrations) *
+        //      P(given minRequiredPenetrations dice, roll at least npcs health)
+        let probabilities = Array(minRequierdPenetrationsGaurenteed - minRequiredPenetrations);
+        for (let j = 0; j < probabilities; j++) {
+            let numPenetrations = minRequiredPenetrations + j;
+            let numDice = numPenetrations * npc.weapon.dice 
+
+        }
     }
+}
+
+function getMinDamageRoll(numDice, dieSize) {
+    return numDice * 1;
+}
+
+function getMaxDamageRoll(numDice, dieSize) {
+    return numDice * dieSize;
 }
 
 // given a set of player stats and a set of npc stats (excluding health), what
@@ -61,7 +92,7 @@ function chanceToHit(attackBonus, defenderDv) {
     return new Fraction(21 - hitTarget, 20);
 }
 
-function f2(pvsGreater) {
+function chanceToPenetrate(pvsGreater) {
     let dsc = dsc2(pvsGreater);
     let dieFailureChance = complementFraction(dsc)
 
